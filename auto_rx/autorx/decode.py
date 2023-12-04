@@ -1298,6 +1298,7 @@ class SondeDecoder(object):
             for _line in self.async_reader.readlines():
                 if (_line != None) and (_line != ""):
                     # Pass the line into the handler, and see if it is OK.
+                    self.log_debug(f"Decoder line {_line}")
                     _ok = self.handle_decoder_line(_line)
 
                     # If we decoded a valid JSON blob, update our last-packet time.

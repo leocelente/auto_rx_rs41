@@ -54,7 +54,7 @@ from autorx.sdr_wrappers import shutdown_sdr
 # Logging level
 # INFO = Basic status messages
 # DEBUG = Adds detailed information on submodule operations.
-logging_level = logging.INFO
+logging_level = logging.DEBUG
 
 
 #
@@ -609,7 +609,7 @@ def telemetry_filter(telemetry):
     # ~2025-2030, so have expanded the regex to match (and also support some older RS92s)
     # Modified 2021-06 to be more flexible and match older sondes, and reprogrammed sondes.
     # Still needs a letter at the start, but the numbers don't need to match the format exactly.
-    vaisala_callsign_valid = re.match(r"[C-Z][\d][\d][\d]\d{4}", _serial)
+    vaisala_callsign_valid = True
 
     # Just make sure we're not getting the 'xxxxxxxx' unknown serial from the DFM decoder.
     if "DFM" in telemetry["type"]:

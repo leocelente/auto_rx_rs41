@@ -100,7 +100,7 @@ class SondehubUploader(object):
 
         # Attempt to reformat the data.
         _telem = self.reformat_data(telemetry)
-        # self.log_debug("Telem: %s" % str(_telem))
+        self.log_debug("Telem: %s" % str(_telem))
 
         # Add it to the queue if we are running.
         if self.input_processing_running and _telem:
@@ -140,96 +140,16 @@ class SondehubUploader(object):
         # Unfortunately we've made things difficult for ourselves with how different sonde types are handled
         # in terms of serial number, type, subtype, etc.
         # Until all the decoders are aligned, we have to handle some sonde types differently.
-        if telemetry["type"].startswith("RS41"):
-            _output["manufacturer"] = "Vaisala"
-            _output["type"] = "RS41"
-            _output["serial"] = telemetry["id"]
-            if "subtype" in telemetry:
-                _output["subtype"] = telemetry["subtype"]
-
-        elif telemetry["type"].startswith("RS92"):
-            _output["manufacturer"] = "Vaisala"
-            _output["type"] = "RS92"
-            _output["serial"] = telemetry["id"]
-            if "subtype" in telemetry:
-                _output["subtype"] = telemetry["subtype"]
-
-        elif telemetry["type"].startswith("DFM"):
-            _output["manufacturer"] = "Graw"
-            _output["type"] = "DFM"
-            _output["subtype"] = telemetry["type"]
-            _output["serial"] = telemetry["id"].split("-")[1]
-            if "dfmcode" in telemetry:
-                _output["dfmcode"] = telemetry["dfmcode"]
-
-            # We are handling DFM packets. We need a few more of these in an upload
-            # for our packets to pass the Sondehub z-check.
-            self.slower_uploads = True
-
-        elif telemetry["type"].startswith("M10") or telemetry["type"].startswith("M20"):
-            _output["manufacturer"] = "Meteomodem"
-            _output["type"] = telemetry["type"]
-            # Strip off leading M10- or M20-
-            _output["serial"] = telemetry["id"][4:]
-
-        elif telemetry["type"] == "LMS6":
-            _output["manufacturer"] = "Lockheed Martin"
-            _output["type"] = "LMS6-403"
-            _output["subtype"] = telemetry["subtype"]
-            _output["serial"] = telemetry["id"].split("-")[1]
-
-        elif telemetry["type"] == "MK2LMS":
-            _output["manufacturer"] = "Lockheed Martin"
-            _output["type"] = "LMS6-1680"
-            _output["serial"] = telemetry["id"].split("-")[1]
-
-        elif telemetry["type"] == "IMET":
-            _output["manufacturer"] = "Intermet Systems"
-            if "subtype" in telemetry:
-                _output["type"] = telemetry['subtype']
-            else:
-                _output["type"] = "iMet-4"
-            _output["serial"] = telemetry["id"].split("-")[1]
-
-        elif telemetry["type"] == "IMET5":
-            _output["manufacturer"] = "Intermet Systems"
-            _output["type"] = "iMet-5x"
-            _output["serial"] = telemetry["id"].split("-")[1]
-            if "subtype" in telemetry:
-                _output["type"] = telemetry["subtype"]
-                _output["subtype"] = telemetry["subtype"]
-
-        elif telemetry["type"] == "MEISEI":
-            _output["manufacturer"] = "Meisei"
-            _output["type"] = telemetry["subtype"]
-            _output["serial"] = telemetry["id"].split("-")[1]
-
-        elif telemetry["type"] == "IMS100":
-            _output["manufacturer"] = "Meisei"
-            _output["type"] = "iMS-100"
-            _output["serial"] = telemetry["id"].split("-")[1]
-
-        elif telemetry["type"] == "RS11G":
-            _output["manufacturer"] = "Meisei"
-            _output["type"] = "RS-11G"
-            _output["serial"] = telemetry["id"].split("-")[1]
-
-        elif telemetry["type"] == "MRZ":
-            _output["manufacturer"] = "Meteo-Radiy"
-            _output["type"] = "MRZ"
-            _output["serial"] = telemetry["id"][4:]
-            if "subtype" in telemetry:
-                _output["subtype"] = telemetry["subtype"]
-
-        elif telemetry["type"] == "MTS01":
-            _output["manufacturer"] = "Meteosis"
-            _output["type"] = "MTS01"
-            _output["serial"] = telemetry["id"].split("-")[1]
-
-        else:
-            self.log_error("Unknown Radiosonde Type %s" % telemetry["type"])
-            return None
-
+        self.log_debug(f'telemetry: {telemetry}')
+        telemetry["id"] = "J4840154"
+        _output["serial"] = "J4840154"
+        telemetry["type"] = "RS41"
+        _output["type"] = "RS41"
+        _output["manufacturer"] = "Vaisala"
+        if "subtype" in telemetry:
+            _output["subtype"] = telemetry["subtype"]   
+    
+        
         # Frame Number
         _output["frame"] = telemetry["frame"]
 
@@ -340,13 +260,15 @@ class SondehubUploader(object):
 
     def upload_telemetry(self, telem_list):
         """ Upload an list of telemetry data to Sondehub """
-
         _data_len = len(telem_list)
 
         try:
             _start_time = time.time()
             _telem_json = json.dumps(telem_list).encode("utf-8")
             _compressed_payload = gzip.compress(_telem_json)
+            self.log_debug(f"telem_list {telem_list}" )
+            self.log_debug(f"_telem_json {_telem_json}" )
+            
         except Exception as e:
             self.log_error(
                 "Error serialising and compressing telemetry list for upload - %s"
